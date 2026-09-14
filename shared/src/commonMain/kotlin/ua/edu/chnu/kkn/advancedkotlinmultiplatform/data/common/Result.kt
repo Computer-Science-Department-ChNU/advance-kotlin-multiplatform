@@ -31,7 +31,7 @@ internal inline fun <T, R> Result<T>.map(transform: (T) -> R): Result<R> {
         is Result.Failure -> Result.Failure(errorMessage)
     }
 }
-
+//TODO investigate inline keyword, and Kotlin Generics, crossline keyword
 internal suspend inline fun <reified T> HttpResponse.handleResponse(): Result<T> {
     return when (status.value) {
         in 200..299 -> {

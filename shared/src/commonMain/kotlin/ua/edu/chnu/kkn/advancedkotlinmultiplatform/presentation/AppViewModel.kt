@@ -55,17 +55,18 @@ class AppViewModel internal constructor(
         viewModelScope.launch {
             resetPreviousResults()
             delay(350.milliseconds)
-            obtainPostsUseCase().onSuccess { result ->
-                _state.update {
-                    it.copy(
-                        posts = result.posts,
-                        result = result.toString()
-                    )
+            obtainPostsUseCase()
+                .onSuccess { result ->
+                    _state.update {
+                        it.copy(
+                            posts = result.posts,
+                            result = result.toString()
+                        )
+                    }
+                }.onFailure { errorMessage ->
+                    _events.trySend(AppEvent.ShowGetErrorSnackbar(errorMessage))
                 }
-                toggleProgressVisibility()
-            }.onFailure { errorMessage ->
-                _events.trySend(AppEvent.ShowGetErrorSnackbar(errorMessage))
-            }
+            toggleProgressVisibility()
         }
     }
 
@@ -98,12 +99,11 @@ class AppViewModel internal constructor(
                             result = result
                         )
                     }
-                    toggleProgressVisibility()
                 }
                 .onFailure { errorMessage ->
                     _events.trySend(AppEvent.ShowPutErrorSnackbar(errorMessage))
-                    toggleProgressVisibility()
                 }
+            toggleProgressVisibility()
         }
     }
 
@@ -112,20 +112,18 @@ class AppViewModel internal constructor(
         viewModelScope.launch {
             resetPreviousResults()
             delay(350.milliseconds)
-            when (val result = removePostUseCase(_state.value.posts.first().id)) {
-                is Result.Success -> {
+            removePostUseCase(_state.value.posts.first().id)
+                .onSuccess { result ->
                     _state.update {
                         it.copy(
-                            result = result.data
+                            result = result
                         )
                     }
-                    toggleProgressVisibility()
                 }
-                is Result.Failure -> {
-                    _state.update { it.copy(error = result.errorMessage) }
-                    toggleProgressVisibility()
+                .onFailure { errorMessage ->
+                    _events.trySend(AppEvent.ShowDeleteErrorSnackbar(errorMessage))
                 }
-            }
+            toggleProgressVisibility()
         }
     }
 
